@@ -1,24 +1,16 @@
 from rest_framework.views import APIView
+from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from rest_framework import status
+from rest_framework.decorators import action 
 
 from apps.orders.models import Order,OrderItem
 from apps.common.choices import OrderStatus
 from apps.orders.api.serializers import OrderSerializer,OrderItemSerializer,OrderItemQuantitySerializer
+from django.utils import timezone
 
 
-class OrderAPIView(APIView):
-    
-    def get(self,request):
-        user = request.user
-        
-        pending_order = Order.objects.filter(user = user, status = OrderStatus.PENDING).first()
-        if not pending_order:
-            pending_order = Order.objects.create(user = user)
-        serializer = OrderSerializer(pending_order)
-        return Response(serializer.data)
-    
 
 class OrderItemAPIView(GenericAPIView):
     serializer_class = OrderItemSerializer
@@ -72,4 +64,66 @@ class OrderItemDetailAPIView(GenericAPIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(serializer.data)
 
+
+class OrderAPIView(APIView):
+    
+    def get(self,request):
+        user = request.user
         
+        pending_order = Order.objects.filter(user = user, status = OrderStatus.PENDING).first()
+        if not pending_order:
+            pending_order = Order.objects.create(user = user)
+        serializer = OrderSerializer(pending_order)
+        return Response(serializer.data)
+    
+
+
+class OrderStatusUpdateAPIView(GenericViewSet):
+    queryset = Order.objects.all()
+    lookup_field = 'id'
+
+    @action(detail=True,methods=['post'])
+    def cancel(self,request,id):
+        order = self.get_object()
+        order.status = OrderStatus.CANCELED
+        order.canceled_at = timezone.now()
+        order.save()
+        return Response(status=200)
+    
+    @action(detail=True,methods=['post'])
+    def confirmed(self,request,id):
+        order = self.get_object()
+        order.status = OrderStatus.CONFIRMED
+        order.created_at = timezone.now()
+        order.save()
+        return Response(status=200)
+   
+    @action(detail=True,methods=['post'])
+    def preparing(self,request,id):
+        order = self.get_object()
+        order.status = OrderStatus.PREPARING
+        order.save()
+        return Response(status=200)
+    
+    @action(detail=True,methods=['post'])
+    def ready(self,request,id):
+        order = self.get_object()
+        order.status = OrderStatus.READY
+        order.save()
+        return Response(status=200)
+    
+    @action(detail=True,methods=['post'])
+    def delivering(self,request,id):
+        order = self.get_object()
+        order.status = OrderStatus.DELIVERING
+        order.save()
+        return Response(status=200)
+    
+    @action(detail=True,methods=['post'])
+    def done(self,request,id):
+        order = self.get_object()
+        order.status = OrderStatus.DONE
+        order.save()
+        return Response(status=200)
+
+   
