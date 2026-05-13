@@ -1,4 +1,4 @@
-from rest_framework import views,generics,viewsets,mixins,status
+from rest_framework import filters, viewsets,mixins,status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser,FormParser
@@ -7,13 +7,23 @@ from apps.products.models import ProductCategory,Product
 from apps.products.api.serializers import (
     ProductCategorySerializer,ProductSerializer,ProductCategoryDetailSerializer
 )
-from apps.products.api.filters import CategoryFilter
 
+from django_filters.rest_framework import DjangoFilterBackend
 
+from apps.common.permissions import IsADMIN
+from rest_framework.permissions import AllowAny
 class ProductCategoryViewSet(viewsets.GenericViewSet,mixins.UpdateModelMixin):
     queryset = ProductCategory.objects.all()
     serializer_class = ProductCategorySerializer
     lookup_field = "id"
+
+    def get_permissions(self):
+        permissions = [AllowAny]
+        if self.action in ["create","destroy","update","partial_update"]:
+            permissions = [IsADMIN]
+
+        return [permission() for permission in permissions]
+    
     def list(self,request):
         serializer = self.get_serializer(
             self.get_queryset(),
@@ -54,9 +64,20 @@ class ProductApiView(viewsets.GenericViewSet,
                      mixins.RetrieveModelMixin):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+
     parser_classes = [MultiPartParser,FormParser]
-    # filterset_fields = ["category__name"]
-    filterset_class = CategoryFilter
+    filter_backends = [DjangoFilterBackend,filters.SearchFilter]
+    filterset_fields = ["category__id"]
+    search_fields = ["name"]
+   # filterset_class = CategoryFilter
+
+    def get_permissions(self):
+        permissions = [AllowAny]
+        if self.action in ["create","destroy","update","partial_update"]:
+            permissions = [IsADMIN]
+
+        return [permission() for permission in permissions]
+    
     def get_queryset(self):
         queryset = self.queryset
 
@@ -64,6 +85,7 @@ class ProductApiView(viewsets.GenericViewSet,
         if category:
             queryset = queryset.filter(category__name = category)
         return queryset
+    
     
     
 

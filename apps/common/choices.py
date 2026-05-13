@@ -9,7 +9,6 @@ class UserRole(models.TextChoices):
 class OrderStatus(models.TextChoices):
 
     PENDING = "pending","Pending"
-    CONFIRMED = "confirmed", "Confirmed"
     PREPARING = "preparing","Preparing"
     READY = "ready", "Ready for pickup/delivery"
     DELIVERING = "delivering","Delivering"

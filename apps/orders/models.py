@@ -18,7 +18,7 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
 
-        if self.status == OrderStatus.CONFIRMED and not self.created_at:
+        if self.status == OrderStatus.PENDING and not self.created_at:
             self.created_at = timezone.now()
 
         elif self.status == OrderStatus.DONE and not self.delivered_at:
