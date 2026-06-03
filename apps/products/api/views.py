@@ -5,13 +5,17 @@ from rest_framework.parsers import MultiPartParser,FormParser
 
 from apps.products.models import ProductCategory,Product
 from apps.products.api.serializers import (
-    ProductCategorySerializer,ProductSerializer,ProductCategoryDetailSerializer
+    ProductCategorySerializer,ProductSerializer,ProductCategoryDetailSerializer,
+    ProductListViewSerializer
 )
+from apps.products.api.pagination import ProductPagination
 
 from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.common.permissions import IsADMIN
 from rest_framework.permissions import AllowAny
+
+
 class ProductCategoryViewSet(viewsets.GenericViewSet,mixins.UpdateModelMixin):
     queryset = ProductCategory.objects.all()
     serializer_class = ProductCategorySerializer
@@ -51,7 +55,7 @@ class ProductCategoryViewSet(viewsets.GenericViewSet,mixins.UpdateModelMixin):
     @action(detail = True,methods = ['GET'])
     def products(self,request,id):
         obj = self.get_object()
-        print(obj)
+        
         serializer = ProductCategoryDetailSerializer(obj)
         return Response(serializer.data)
 
@@ -64,13 +68,20 @@ class ProductApiView(viewsets.GenericViewSet,
                      mixins.RetrieveModelMixin):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-
+    pagination_class = ProductPagination
     parser_classes = [MultiPartParser,FormParser]
     filter_backends = [DjangoFilterBackend,filters.SearchFilter]
     filterset_fields = ["category__id"]
     search_fields = ["name"]
-   # filterset_class = CategoryFilter
-
+  
+    def get_serializer(self, *args, **kwargs):
+        if self.action == 'list':
+            serializer_class = ProductListViewSerializer
+        else:
+            serializer_class = ProductSerializer
+        
+       
+        return serializer_class(*args, **kwargs)
     def get_permissions(self):
         permissions = [AllowAny]
         if self.action in ["create","destroy","update","partial_update"]:
@@ -94,23 +105,3 @@ class ProductApiView(viewsets.GenericViewSet,
 
 
 
-
-#file read how it works
-# from drf_spectacular.utils import extend_schema
-
-# @extend_schema(request=serializers.FileRead)
-# @api_view(['POST','GET'])
-# def read_image(request):
-#     if request.method == 'POST':
-#         file = serializers.FileRead(data = request.data)
-          # file = request.FILES.get("key_name")
-#         if not file.is_valid():
-#             return Response(file.errors)
-
-#         print(file.validated_data['f'].read())
-#         return Response({
-#             "validated_data":file.validated_data,
-#             "data":file.data,
-#             "instance":file.instance
-
-#         })

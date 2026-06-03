@@ -85,7 +85,15 @@ class OrderSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-    
+
+class OrderListSerializer(OrderSerializer):
+    order_items = None
+    location = None
+    location_id = None
+    user = None
+    class Meta:
+         model = Order
+         exclude = ['delivered_at','canceled_at','created_at','location','user']
 
 class OrderStatusSerializer(serializers.Serializer):
   

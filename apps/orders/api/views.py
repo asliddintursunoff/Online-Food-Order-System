@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from apps.orders.models import Order
 from apps.common.choices import OrderStatus,UserRole
-from apps.orders.api.serializers import OrderSerializer, OrderStatusSerializer
+from apps.orders.api.serializers import OrderSerializer, OrderStatusSerializer,OrderListSerializer
 from apps.orders.utils import calculating_imaginary_devilery_time
 
 
@@ -50,21 +50,9 @@ class OrderStatusAPIView(GenericViewSet,mixins.ListModelMixin):
     
     def get_serializer(self, *args, **kwargs):
         if self.request.method == "GET":
-            self.serializer_class = OrderSerializer
+            self.serializer_class = OrderListSerializer
         return super().get_serializer(*args, **kwargs)
     
-   
-    def get_queryset(self):
-        queryset = Order.objects.all()
-        user = self.request.user
-        if self.request.method == "GET":
-            stat = self.request.query_params.get('status')
-            
-            if stat:
-                queryset =queryset.filter(status =stat).order_by("created_at")
-            if user.role == UserRole.CLIENT:
-                queryset =queryset.filter(user = user)
-        return queryset
     def get_queryset(self):
         queryset = Order.objects.all()
         user = self.request.user

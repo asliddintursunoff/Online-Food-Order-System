@@ -17,19 +17,6 @@ class ProductCategorySerializer(serializers.Serializer):
     
     
 
-# class ProductSerializer(serializers.Serializer):
-#     id = serializers.IntegerField(read_only=True)
-#     image = serializers.ImageField()
-#     name = serializers.CharField()
-#     description = serializers.CharField(required = False)
-#     mass = serializers.DecimalField(max_digits=10,decimal_places=3,required = False)
-#     mass_type = serializers.ChoiceField(MassType.choices,required = False)
-#     price = serializers.DecimalField(decimal_places=2,max_digits=10)
-
-#     def create(self, validated_data):
-#         return Product.objects.create(**validated_data)
-    
-
 class ProductSerializer(serializers.ModelSerializer):
     category = ProductCategorySerializer(read_only = True)
     category_id = serializers.PrimaryKeyRelatedField(write_only = True,queryset=ProductCategory.objects.all())
@@ -47,6 +34,11 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.save()
         return instance        
 
+class ProductListViewSerializer(ProductSerializer):
+    category = None
+    class Meta:
+        model = Product
+        exclude = ['description','mass','mass_type']
 
 class ProductBaseSerializer(serializers.ModelSerializer):
     class Meta:
