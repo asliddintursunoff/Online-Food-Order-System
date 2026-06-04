@@ -185,4 +185,4 @@ SPECTACULAR_SETTINGS = {
 
 
 
-BASE_DOMAIN = 'localhost'
+BASE_DOMAIN = os.getenv("BASE_DOMAIN")
