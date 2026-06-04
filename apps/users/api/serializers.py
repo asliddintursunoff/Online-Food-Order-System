@@ -3,11 +3,12 @@ from rest_framework import serializers
 from apps.common.choices import UserRole
 from apps.users.models import UserLocation,User
 from django.contrib.gis.geos import Point
-
+import re
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class MyTokenSerializer(TokenObtainPairSerializer):
+    username_field = 'phone_number'
     def validate(self, attrs):
         result =  super().validate(attrs)
         result['role'] = self.user.role
@@ -23,7 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "id","first_name","last_name","username","password","password_confirm","phone_number","role"
+            "id","first_name","last_name","password","password_confirm","phone_number","role"
         ]
 
         extra_kwargs = {
@@ -35,6 +36,16 @@ class UserSerializer(serializers.ModelSerializer):
                 "read_only": True
             }
         }
+
+    def validate_phone_number(self, value):
+        pattern = r'^\+998(90|91|93|94|95|97|98|99|33|88|77)\d{7}$'
+        
+        if not re.match(pattern, value):
+            raise serializers.ValidationError(
+                "Phone number must start with +998 followed by valid operator code. Example: +998901234567"
+            )
+        
+        return value
 
     def validate(self, attrs):
 

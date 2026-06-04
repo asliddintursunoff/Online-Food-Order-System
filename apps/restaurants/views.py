@@ -6,7 +6,7 @@ from rest_framework import status
 from django.contrib.gis.geos import Point
 from django_tenants.utils import schema_context
 from django.db import transaction,IntegrityError
-
+import re
 
 from apps.restaurants.models import Restaurant
 from apps.restaurants.models import Restaurant,RestaurantDomain
@@ -22,11 +22,19 @@ class RestaurantRegisterSerializer(serializers.Serializer):
     lon =  serializers.DecimalField(max_digits=20, decimal_places=15,write_only = True)
     first_name = serializers.CharField()
     last_name = serializers.CharField()
-    username = serializers.CharField()
     password = serializers.CharField()
     phone_number = serializers.CharField()
 
-
+    def validate_phone_number(self, value):
+        pattern = r'^\+998(90|91|93|94|95|97|98|99|33|88|77)\d{7}$'
+        
+        if not re.match(pattern, value):
+            raise serializers.ValidationError(
+                "Phone number must start with +998 followed by valid operator code. Example: +998901234567"
+            )
+        
+        return value
+   
 
 class RestaurantRegister(GenericAPIView):
     
@@ -55,7 +63,6 @@ class RestaurantRegister(GenericAPIView):
                     from apps.users.models import User
                     user = User(first_name = data.data.get("first_name"),
                                 last_name = data.data.get("last_name"),
-                                username = data.data.get("username"),
                                 phone_number = data.data.get("phone_number"),
                                 role = UserRole.ADMIN
                                 )

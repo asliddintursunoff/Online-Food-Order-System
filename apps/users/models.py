@@ -5,12 +5,15 @@ from django.contrib.auth.models import AbstractUser
 from apps.common.choices import UserRole
 
 class User(AbstractUser):
-    phone_number = models.CharField(max_length=13,null=True,blank=True)
+    username = None
+    phone_number = models.CharField(db_index=True,unique=True,max_length=13,null=True,blank=True)
     role = models.CharField(
         choices=UserRole.choices,
         default=UserRole.CLIENT,
         max_length=20
     )
+
+    USERNAME_FIELD = 'phone_number'
 
 class UserLocation(models.Model):
     user = models.ForeignKey(User,on_delete=models.CASCADE)
