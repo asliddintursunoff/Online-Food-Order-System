@@ -30,26 +30,35 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = [
+SHARED_APPS = [
+    'django_tenants',
+    'apps.restaurants',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.users',
-    # 'apps.restaurants',
-    'apps.products',
-    'apps.orders',
     'drf_spectacular',
     'rest_framework',
     'django_filters',
     'django.contrib.gis',
-    "debug_toolbar",
+    # 'debug_toolbar',
 ]
 
+TENANT_APPS = [
+    'apps.users',
+    'apps.products',
+    'apps.orders',
+]
+
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS ] 
+
+TENANT_MODEL = 'restaurants.Restaurant'
+TENANT_DOMAIN_MODEL = 'restaurants.RestaurantDomain'
 MIDDLEWARE = [
-     "debug_toolbar.middleware.DebugToolbarMiddleware",
+    'django_tenants.middleware.main.TenantMainMiddleware',
+    # "debug_toolbar.middleware.DebugToolbarMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -58,10 +67,13 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
-ROOT_URLCONF = 'config.urls'
+
+ROOT_URLCONF = 'config.tenant_urls'
+PUBLIC_SCHEMA_URLCONF = 'config.public_urls'
 
 TEMPLATES = [
     {
@@ -88,7 +100,10 @@ from dotenv import load_dotenv
 load_dotenv(BASE_DIR / ".env")
 DATABASES = {
     "default": {
-        "ENGINE": "django.contrib.gis.db.backends.postgis",
+        "ENGINE":"config.backends",
+        #Using both of them at the same time like this is impossible so I created my own DatabaseEngine so it mixes both Postgis and Django Tenant
+        # "ENGINE": "django.contrib.gis.db.backends.postgis",
+        # "ENGINE": "django_tenants.postgresql_backend",
         "NAME": os.getenv("DB_NAME"),
         "USER": os.getenv("DB_USER"),
         "PASSWORD": os.getenv("DB_PASSWORD"),
@@ -96,6 +111,10 @@ DATABASES = {
         "PORT": os.getenv("DB_PORT"),
     }
 }
+
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
 
 
 # Password validation
@@ -158,9 +177,12 @@ SIMPLE_JWT = {
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Online Food Order API',
     'VERSION': '1.0.0',
-    'COMPONENT_SPLIT_REQUEST': True,
+    'COMPONENT_SPLIT_REQUEST': False,
 
    
 }
 
 
+
+
+BASE_DOMAIN = 'localhost'
